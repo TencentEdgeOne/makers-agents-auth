@@ -1,46 +1,223 @@
 /**
- * 后端接口（EdgeOne Pages Functions）
+ * Backend API (EdgeOne Makers)
  *
- * 路由映射规则（文件 → 路由）：
- *   agents/chat/index.py   → POST /chat          主聊天入口
- *   agents/chat/stop.py    → POST /chat/stop     中断正在执行的 agent（预留）
- *   agents/chat/_model.py  → （私有，不映射）     AI 网关 / 模型配置
+ * Route mapping (file → route):
+ *   agents/chat/index.ts                → POST /chat     Main chat endpoint
+ *   agents/stop/index.ts                → POST /stop     Abort the active agent run
+ *   cloud-functions/history/index.ts    → POST /history  Get conversation history
+ *   cloud-functions/auth/login          → POST /auth/login
+ *   cloud-functions/auth/register       → POST /auth/register
+ *   cloud-functions/auth/user           → GET  /auth/user
+ *   cloud-functions/auth/logout         → POST /auth/logout
  *
- * 本文件集中定义所有路径 + 请求封装，方便以后扩展子路由。
+ * This file defines all API paths and request wrappers.
  */
+
+import type { Message } from './types';
 
 export const API = {
   chat: '/chat',
-  chatStop: '/chat/stop',   // 预留：中断正在执行的 agent
+  chatStop: '/stop',
+  history: '/history',
+  authLogin: '/auth/login',
+  authRegister: '/auth/register',
+  authUser: '/auth/user',
+  authLogout: '/auth/logout',
 } as const;
+
+// ── Auth helpers ──────────────────────────────────────────────
+
+export interface AuthUser {
+  id: string;
+  username: string;
+}
+
+/** Thrown on 401 so UI layer can react (typically: open the login modal). */
+export class AuthRequiredError extends Error {
+  constructor() {
+    super('auth_required');
+    this.name = 'AuthRequiredError';
+  }
+}
+
+/** Dispatch the global 401 signal — AuthGate listens for this to open the modal. */
+function dispatchAuthRequired(): void {
+  window.dispatchEvent(new CustomEvent('eo:auth-required'));
+}
+
+/** Generic 401 guard — any business request that gets 401 is treated as session-expired (throwing variant for non-streaming callers). */
+function check401<T extends Response>(res: T): T {
+  if (res.status === 401) {
+    dispatchAuthRequired();
+    throw new AuthRequiredError();
+  }
+  return res;
+}
+
+export async function login(username: string, password: string): Promise<AuthUser> {
+  const res = await fetch(API.authLogin, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || `login_failed_${res.status}`);
+  }
+  const data = await res.json() as { user: AuthUser };
+  return data.user;
+}
+
+export async function register(username: string, password: string): Promise<AuthUser> {
+  const res = await fetch(API.authRegister, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || `register_failed_${res.status}`);
+  }
+  const data = await res.json() as { user: AuthUser };
+  return data.user;
+}
+
+/** Probe the current session — returns null on failure so the UI can render the guest state. */
+export async function fetchUser(): Promise<AuthUser | null> {
+  try {
+    const res = await fetch(API.authUser, { credentials: 'include' });
+    if (!res.ok) return null;
+    const data = await res.json() as { user?: AuthUser };
+    return data.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function logout(): Promise<void> {
+  await fetch(API.authLogout, {
+    method: 'POST',
+    credentials: 'include',
+  }).catch(() => undefined);
+}
+
+// ── Original API ──────────────────────────────────────────────
+
+export interface RawSseEvent {
+  eventType: string;
+  data: unknown;
+  raw: string;
+  timestamp: number;
+}
 
 export interface StreamCallbacks {
   onTextDelta: (delta: string) => void;
   onToolCalled: (toolName: string) => void;
   onDone: () => void;
   onError: (err: Error) => void;
+  onRawEvent?: (event: RawSseEvent) => void;
+  /**
+   * Called when the session has expired (401). Takes precedence over onError;
+   * lets the UI clean up its optimistic placeholder bubble instead of
+   * surfacing a misleading "request failed" message.
+   */
+  onAuthRequired?: () => void;
+}
+
+/** Get conversation history for restoring the chat window after page refresh. */
+export async function fetchConversationHistory(conversationId: string): Promise<Message[]> {
+  const startTime = Date.now();
+  console.log(`[History] Request start time: ${new Date(startTime).toLocaleString()}`);
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(API.history, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ conversation_id: conversationId }),
+        credentials: 'include',
+      });
+
+      // 401 = session expired, handle uniformly.
+      if (res.status === 401) {
+        check401(res);
+      }
+
+      // 409 = Active request on same conversation (React StrictMode double-render), retry shortly
+      if (res.status === 409) {
+        await new Promise(r => setTimeout(r, 500));
+        continue;
+      }
+
+      if (!res.ok) {
+        const endTime = Date.now();
+        console.log(`[History] Request end time: ${new Date(endTime).toLocaleString()}`);
+        console.log(`[History] Total time: ${endTime - startTime}ms`);
+        return [];
+      }
+
+      const data = await res.json().catch(() => null) as { messages?: Message[] } | null;
+      const endTime = Date.now();
+      console.log(`[History] Request end time: ${new Date(endTime).toLocaleString()}`);
+      console.log(`[History] Total time: ${endTime - startTime}ms`);
+      return Array.isArray(data?.messages) ? data.messages : [];
+    } catch {
+      const endTime = Date.now();
+      console.log(`[History] Request end time: ${new Date(endTime).toLocaleString()}`);
+      console.log(`[History] Total time: ${endTime - startTime}ms (aborted with error)`);
+      return [];
+    }
+  }
+
+  const endTime = Date.now();
+  console.log(`[History] Request end time: ${new Date(endTime).toLocaleString()}`);
+  console.log(`[History] Total time: ${endTime - startTime}ms (retries exhausted)`);
+  return [];
 }
 
 /**
- * 通过 SSE 流式调用 POST /chat
- * 后端推送三种事件：text_delta / tool_called / done / error
+ * Stream POST /chat via SSE
+ * Backend pushes events: text_delta / tool_called / done / error
  *
- * 返回一个 AbortController，调用方可用它中断请求（或配合 /chat/stop 端点优雅中止）。
+ * Returns an AbortController the caller can use to abort (or pair with /chat/stop for graceful abort).
  */
 export function sendMessageStream(
   message: string,
   callbacks: StreamCallbacks,
+  conversationId?: string,
 ): AbortController {
   const ctrl = new AbortController();
 
   (async () => {
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (conversationId) {
+        headers['makers-conversation-id'] = conversationId;
+      }
+
       const res = await fetch(API.chat, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ message }),
         signal: ctrl.signal,
+        credentials: 'include',
       });
+
+      if (res.status === 401) {
+        // Session expired: dispatch the global event so AuthGate opens the modal,
+        // call onAuthRequired so the caller can clean up its placeholder bubble,
+        // then return without invoking onError — we don't want a misleading
+        // "request failed" message in the chat for what is really a sign-in prompt.
+        dispatchAuthRequired();
+        callbacks.onAuthRequired?.();
+        return;
+      }
 
       if (!res.ok) {
         callbacks.onError(new Error(`HTTP ${res.status}: ${await res.text().catch(() => '')}`));
@@ -55,6 +232,7 @@ export function sendMessageStream(
 
       const decoder = new TextDecoder();
       let buffer = '';
+      let doneReceived = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -62,21 +240,27 @@ export function sendMessageStream(
 
         buffer += decoder.decode(value, { stream: true });
 
-        // SSE 格式：每个事件以 \n\n 分隔
+        // SSE format: events separated by \n\n
         const parts = buffer.split('\n\n');
-        // 最后一段可能不完整，保留在 buffer 里
+        // Last segment may be incomplete — keep in buffer
         buffer = parts.pop() || '';
 
         for (const part of parts) {
           if (!part.trim()) continue;
-          dispatchSseChunk(part, callbacks);
+          dispatchSseChunk(
+            part,
+            callbacks,
+            () => { doneReceived = true; },
+          );
         }
       }
 
-      // 流正常结束但没收到 done 事件时也触发完成
-      callbacks.onDone();
+      // Fallback: trigger done only if backend did not send done event
+      if (!doneReceived) {
+        callbacks.onDone();
+      }
     } catch (err) {
-      // AbortError 不触发错误回调
+      // AbortError does not trigger error callback
       if (err instanceof DOMException && err.name === 'AbortError') return;
       callbacks.onError(err instanceof Error ? err : new Error(String(err)));
     }
@@ -85,8 +269,12 @@ export function sendMessageStream(
   return ctrl;
 }
 
-/** 解析一条 SSE 事件并分发给对应回调 */
-function dispatchSseChunk(part: string, cb: StreamCallbacks): void {
+/** Parse a single SSE event and dispatch to the corresponding callback */
+function dispatchSseChunk(
+  part: string,
+  cb: StreamCallbacks,
+  markDone: () => void,
+): void {
   let eventType = '';
   let data = '';
 
@@ -102,6 +290,16 @@ function dispatchSseChunk(part: string, cb: StreamCallbacks): void {
 
   try {
     const parsed = JSON.parse(data);
+
+    if (cb.onRawEvent) {
+      cb.onRawEvent({
+        eventType,
+        data: parsed,
+        raw: data,
+        timestamp: Date.now(),
+      });
+    }
+
     switch (eventType) {
       case 'text_delta':
         cb.onTextDelta(parsed.delta);
@@ -113,18 +311,29 @@ function dispatchSseChunk(part: string, cb: StreamCallbacks): void {
         cb.onError(new Error(parsed.message || 'agent returned error'));
         break;
       case 'done':
+        markDone();
         cb.onDone();
         break;
     }
   } catch {
-    // 忽略解析失败的事件
+    if (cb.onRawEvent) {
+      cb.onRawEvent({
+        eventType,
+        data: null,
+        raw: data,
+        timestamp: Date.now(),
+      });
+    }
   }
 }
 
 /**
- * 请求后端中断当前正在执行的 agent
- * 对应 agents/chat/stop.py → POST /chat/stop
- * 当前后端还没实现，调用会失败。前端可以先准备好调用点，后端实现后自然生效。
+ * Request the backend to abort the currently running agent
+ * (POST /stop, handled by agents/stop/index.ts).
+ *
+ * Note: the stop request header must NOT carry the same conversation_id as chat,
+ * otherwise the runtime will overwrite chat's cancel_event with stop's cancel_event,
+ * causing abort_active_run to fail. The target conversation_id is passed only via body.
  */
 export async function stopAgent(conversationId?: string): Promise<boolean> {
   try {
@@ -132,6 +341,7 @@ export async function stopAgent(conversationId?: string): Promise<boolean> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ conversation_id: conversationId }),
+      credentials: 'include',
     });
     return res.ok;
   } catch {

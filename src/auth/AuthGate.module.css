@@ -1,0 +1,382 @@
+/* ============================================================================
+ * AuthGate.module.css
+ * --------------------------------------------------------------------------
+ * 2026-06 重构:从 split-screen 整页拦截 → 居中模态弹窗。
+ * 视觉上保持原表单卡(.card / .form / .input / .submit / .alert)的原貌,
+ * 只是把外壳从 grid-1.1fr-1fr 替换成全屏 overlay + 居中卡。
+ *
+ * design-taste-frontend-v1 baseline (VARIANCE=8 / MOTION=6 / DENSITY=4):
+ *   - 玻璃磨砂 backdrop + 内层 1px 高光边
+ *   - 入场弹簧曲线 cubic-bezier(0.16, 1, 0.3, 1)
+ *   - 物理反馈 active: translateY(1px)
+ *   - 移动端 padding 退化
+ * ========================================================================== */
+
+/* 探测期占位 — 仅在启动 fetchMe() 期间短暂存在,防止内容闪一下 */
+.probeShell {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-base);
+  pointer-events: none;
+}
+
+/* ── Modal Overlay ─────────────────────────────────────── */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;             /* 在 UserPill (1001) / menu (1003) 之上 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(8, 6, 12, 0.62);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  animation: overlayIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modalCard {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 36px 32px 32px;
+  border-radius: 18px;
+  background: rgba(20, 18, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 30px 60px -20px rgba(0, 0, 0, 0.65),
+    0 12px 24px -8px rgba(0, 0, 0, 0.45);
+  animation: cardIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modalClose {
+  appearance: none;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 160ms, background 160ms, transform 140ms;
+}
+.modalClose:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+.modalClose:active {
+  transform: translateY(1px);
+}
+.modalClose svg {
+  width: 16px;
+  height: 16px;
+}
+
+.modalEyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent-gold);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Tabs ─────────────────────────────────────────────── */
+
+.tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-border);
+  width: fit-content;
+}
+.tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast),
+              transform var(--transition-fast);
+}
+.tab:hover { color: var(--text-primary); }
+.tab:active { transform: translateY(1px); }
+.tabActive {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ── Form ─────────────────────────────────────────────── */
+
+.formTitle {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.formHint {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.formHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-secondary);
+}
+.input {
+  appearance: none;
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--bg-border);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  transition: border-color var(--transition-fast), background var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+.input::placeholder { color: var(--text-muted); }
+.input:hover { background: var(--bg-elevated); }
+.input:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 3px rgba(245, 200, 66, 0.12);
+}
+.inputError {
+  border-color: #b94a4a;
+  box-shadow: 0 0 0 3px rgba(185, 74, 74, 0.12);
+}
+.inputWithToggle {
+  padding-right: 44px;
+}
+
+/* ── 密码可见性切换 ─────────────────────────────────── */
+
+.passwordWrap {
+  position: relative;
+  display: block;
+}
+.passwordToggle {
+  appearance: none;
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color var(--transition-fast),
+              background var(--transition-fast),
+              transform var(--transition-fast);
+}
+.passwordToggle:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+.passwordToggle:active:not(:disabled) {
+  transform: translateY(calc(-50% + 1px));
+}
+.passwordToggle:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 1px;
+}
+.passwordToggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.passwordToggle svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.helper {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.helperError {
+  color: #ff8a8a;
+}
+
+/* ── 错误条 ───────────────────────────────────────── */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(185, 74, 74, 0.08);
+  border: 1px solid rgba(185, 74, 74, 0.32);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #ffb6b6;
+  line-height: 1.5;
+  animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+.alert::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  flex: 0 0 6px;
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: #ff6b6b;
+  box-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
+}
+@keyframes shake {
+  0%, 100%       { transform: translateX(0); }
+  20%            { transform: translateX(-5px); }
+  40%, 80%       { transform: translateX(4px); }
+  60%            { transform: translateX(-3px); }
+}
+
+/* ── 主按钮 ───────────────────────────────────────── */
+
+.submit {
+  appearance: none;
+  border: none;
+  position: relative;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bg-base);
+  background: var(--accent-gold);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+              background var(--transition-fast);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset,
+              0 8px 24px -8px rgba(245, 200, 66, 0.5);
+}
+.submit:hover:not(:disabled) {
+  background: #ffd95a;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset,
+              0 12px 28px -8px rgba(245, 200, 66, 0.6);
+}
+.submit:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.submit .spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin-right: 8px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  vertical-align: -2px;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.swap {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.swapBtn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--accent-gold);
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color var(--transition-fast);
+}
+.swapBtn:hover { text-decoration: underline; }
+
+/* ── 移动端适配 ─────────────────────────────────────── */
+
+@media (max-width: 540px) {
+  .modalOverlay {
+    padding: 16px;
+    align-items: flex-end;
+  }
+  .modalCard {
+    padding: 32px 24px 28px;
+    max-width: none;
+    border-radius: 16px;
+  }
+}

@@ -1,21 +1,18 @@
 # Dependencies
 node_modules/
+.venv/
+
+# Build outputs
+dist/
+
+# EdgeOne generated files
+.edgeone/
+.edgeone.zip
 
 # Environment variables
 .env
-.env.*
-
-# EdgeOne platform runtime
-.edgeone/
-
-# Build output
-dist/
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-.venv/
+agents-python/.env
+agents-python/chat/.env
 
 # OS
 .DS_Store
@@ -24,3 +21,23 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+.codegraph
+
+# Internal planning docs
+plan/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Local backups
+agents-backup/
+
+# AI assistant local instructions
+CLAUDE.md
+AGENTS.md
+.agents/*
+.claude/*

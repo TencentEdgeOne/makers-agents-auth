@@ -1,17 +1,18 @@
 import { useState, useRef, useCallback, KeyboardEvent } from 'react';
+import { useT, MessageKeys } from '../i18n';
 import styles from './ChatInput.module.css';
 
 interface Props {
   onSend: (text: string) => void;
+  onStop: () => void;
+  onClear: () => void;
   disabled: boolean;
 }
 
-const PRESETS = [
-  '现在北京天气怎么样，有什么穿衣建议吗？',
-  '帮我翻译"你好，欢迎来到北京！"，并统计翻译字符数。',
-];
+const PRESET_KEYS: MessageKeys[] = ['preset.1', 'preset.2'];
 
-export default function ChatInput({ onSend, disabled }: Props) {
+export default function ChatInput({ onSend, onStop, onClear, disabled }: Props) {
+  const { t } = useT();
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -47,14 +48,14 @@ export default function ChatInput({ onSend, disabled }: Props) {
   return (
     <div className={styles.bar}>
       <div className={styles.presets}>
-        {PRESETS.map(text => (
+        {PRESET_KEYS.map(key => (
           <button
-            key={text}
+            key={key}
             className={styles.presetChip}
-            onClick={() => handlePreset(text)}
+            onClick={() => handlePreset(t(key))}
             disabled={disabled}
           >
-            {text}
+            {t(key)}
           </button>
         ))}
       </div>
@@ -63,7 +64,7 @@ export default function ChatInput({ onSend, disabled }: Props) {
         <textarea
           ref={textareaRef}
           className={styles.textarea}
-          placeholder="发消息…  ⏎ 发送 · Shift+⏎ 换行"
+          placeholder={t("chat.placeholder")}
           value={value}
           onChange={e => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -75,17 +76,41 @@ export default function ChatInput({ onSend, disabled }: Props) {
           className={`${styles.sendBtn} ${(!value.trim() || disabled) ? styles.sendDisabled : ''}`}
           onClick={handleSend}
           disabled={!value.trim() || disabled}
-          aria-label="发送"
+          aria-label="Send"
         >
-          {disabled
-            ? <span className={styles.spinner} />
-            : <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
-                <path d="M3 10L17 3l-4 7 4 7L3 10z" fill="currentColor"/>
-              </svg>
-          }
+          <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+            <path d="M3 10L17 3l-4 7 4 7L3 10z" fill="currentColor"/>
+          </svg>
         </button>
+        <button
+          className={styles.clearBtn}
+          onClick={onClear}
+          disabled={disabled}
+          aria-label="Clear history"
+          title="Clear history"
+        >
+          <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/>
+            <path d="M14 11v6"/>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+        </button>
+        {disabled && (
+          <button
+            className={styles.stopBtn}
+            onClick={onStop}
+            aria-label="Stop generation"
+            title="Stop generation"
+          >
+            <svg viewBox="0 0 20 20" fill="none" width="14" height="14">
+              <rect x="4" y="4" width="12" height="12" rx="2" fill="currentColor"/>
+            </svg>
+          </button>
+        )}
       </div>
-      <p className={styles.hint}>由 OpenAI Agents SDK 驱动 · 仅供演示</p>
+      <p className={styles.hint}>{t("chat.hint")}</p>
     </div>
   );
 }
