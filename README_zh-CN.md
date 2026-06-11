@@ -6,7 +6,7 @@
 
 **框架：** OpenAI Agents SDK · **分类：** Quick Start · **语言：** TypeScript
 
-[![Deploy to EdgeOne Makers](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/makers/new?template=makers-agent-auth&from=within&fromAgent=1&agentLang=typescript)
+[![Deploy to EdgeOne Makers](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://console.cloud.tencent.com/edgeone/makers/new?template=makers-agents-auth&from=within&fromAgent=1&agentLang=typescript)
 
 ## 概述
 

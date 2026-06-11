@@ -6,7 +6,7 @@
 
 **Framework:** OpenAI Agents SDK · **Category:** Quick Start · **Language:** TypeScript
 
-[![Deploy to EdgeOne Makers](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/makers/new?template=makers-agent-auth&from=within&fromAgent=1&agentLang=typescript)
+[![Deploy to EdgeOne Makers](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/makers/new?template=makers-agents-auth&from=within&fromAgent=1&agentLang=typescript)
 
 ## Overview
 

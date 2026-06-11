@@ -37,18 +37,6 @@ const en = {
   // Language toggle
   "lang.switch": "中文",
 
-  // Auth screen — left panel
-  "auth.brand": "OpenAI Agent · Edge",
-  "auth.eyebrow": "Pages Agent · Auth Scheme A",
-  "auth.headline.lead": "An edge",
-  "auth.headline.accent": "identity",
-  "auth.headline.tail": "gateway.",
-  "auth.deck": "Middleware rejects at the edge, cloud-functions handle auth via Neon Postgres, and the Agent Runtime independently verifies the same JWT — two layers of defense, no reliance on upstream headers.",
-  "auth.signal.edge": "Edge",
-  "auth.signal.db": "Postgres",
-  "auth.signal.hash": "Hash",
-  "auth.signal.token": "Token",
-
   // Auth screen — tabs / forms
   "auth.tab.login": "Sign in",
   "auth.tab.register": "Sign up",
@@ -96,23 +84,6 @@ const en = {
   "pill.token.value": "HS256 · HttpOnly Cookie",
   "pill.expiresAt": "Expires at",
   "pill.signout": "Sign out",
-
-  // Auth Chain Trace
-  "trace.title": "Auth chain trace",
-  "trace.idle": "Idle · send a message to activate",
-  "trace.streaming": "Agent streaming…",
-  "trace.complete": "Chain complete",
-  "trace.error": "Chain broken",
-  "trace.node.browser": "Browser",
-  "trace.node.browser.note": "Cookie attached",
-  "trace.node.middleware": "Middleware",
-  "trace.node.middleware.note": "early-reject",
-  "trace.node.agent": "Agent Runtime",
-  "trace.node.agent.note": "auth_ok confirmed",
-  "trace.node.neon": "Neon",
-  "trace.node.neon.note": "HTTPS · users",
-  "trace.node.response": "Response",
-  "trace.node.response.note": "first token",
 } as const;
 
 export default en;

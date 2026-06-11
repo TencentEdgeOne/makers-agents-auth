@@ -37,18 +37,6 @@ const zh = {
   // Language toggle
   "lang.switch": "English",
 
-  // Auth screen — left panel
-  "auth.brand": "OpenAI Agent · Edge",
-  "auth.eyebrow": "Pages Agent · 鉴权方案一",
-  "auth.headline.lead": "一道边缘",
-  "auth.headline.accent": "身份",
-  "auth.headline.tail": "之门",
-  "auth.deck": "EdgeOne 中间件在节点早拒,cloud-functions 走 Neon Postgres 完成登录注册,Agent Runtime 用同一个密钥独立验签 — 双层防御铁律,不依赖任何上游 header。",
-  "auth.signal.edge": "边缘节点",
-  "auth.signal.db": "Postgres",
-  "auth.signal.hash": "哈希",
-  "auth.signal.token": "令牌",
-
   // Auth screen — tabs / forms
   "auth.tab.login": "登录",
   "auth.tab.register": "注册",
@@ -96,23 +84,6 @@ const zh = {
   "pill.token.value": "HS256 · HttpOnly Cookie",
   "pill.expiresAt": "过期时间",
   "pill.signout": "退出登录",
-
-  // Auth Chain Trace(每条消息发送时实时点亮)
-  "trace.title": "鉴权链路追踪",
-  "trace.idle": "空闲 · 发送消息以激活链路",
-  "trace.streaming": "Agent 流式输出中",
-  "trace.complete": "链路完成",
-  "trace.error": "链路中断",
-  "trace.node.browser": "浏览器",
-  "trace.node.browser.note": "Cookie 携带",
-  "trace.node.middleware": "Middleware",
-  "trace.node.middleware.note": "早拒",
-  "trace.node.agent": "Agent Runtime",
-  "trace.node.agent.note": "auth_ok 已确认",
-  "trace.node.neon": "Neon",
-  "trace.node.neon.note": "HTTPS · users 表",
-  "trace.node.response": "响应流",
-  "trace.node.response.note": "首字 token",
 } as const;
 
 export default zh;

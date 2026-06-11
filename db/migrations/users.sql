@@ -1,17 +1,17 @@
 -- ============================================================================
--- users.sql  ·  EdgeOne Pages Agent · 鉴权方案一(Neon Postgres)
+-- users.sql  ·  EdgeOne Pages Agent · Auth schema (Neon Postgres)
 -- ----------------------------------------------------------------------------
--- 在 Neon 控制台 SQL Editor 直接粘贴执行,或通过 psql:
+-- Run this in Neon's SQL Editor, or via psql:
 --   psql "$DATABASE_URL" -f db/migrations/users.sql
 --
 -- ============================================================================
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- 用于 gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- needed for gen_random_uuid()
 
 CREATE TABLE IF NOT EXISTS users (
   id            UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   username      VARCHAR(64)  NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,       
+  password_hash VARCHAR(255) NOT NULL,
   created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
