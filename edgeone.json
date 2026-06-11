@@ -8,7 +8,7 @@
   },
   "agents": {
     "timeout": 900,
-    "framework": "openai-sdk",
+    "framework": "openai-agents-sdk",
     "sandbox": {
       "timeout": 900
     }

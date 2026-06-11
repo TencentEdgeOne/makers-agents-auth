@@ -1,7 +1,5 @@
 # Agents Login Auth Starter
 
-**Language:** English | [简体中文](./README_zh-CN.md)
-
 > A streaming chat agent template built with the **OpenAI Agents SDK** on EdgeOne Makers — with end-to-end authentication (edge middleware + Cloud Functions + Agent self-verify) backed by Neon Postgres.
 
 **Framework:** OpenAI Agents SDK · **Category:** Quick Start · **Language:** TypeScript
@@ -278,7 +276,7 @@ Notes:
 
 ### How to get `AI_GATEWAY_API_KEY`
 
-1. Open the [Makers Console](https://console.cloud.tencent.com/edgeone/makers).
+1. Open the [Makers Console](https://console.tencentcloud.com/edgeone/makers).
 2. Sign in and enable Makers.
 3. Go to **Makers → Models → API Key** and create a key.
 4. Copy it into `AI_GATEWAY_API_KEY` (set `AI_GATEWAY_BASE_URL` to `https://ai-gateway.edgeone.link/v1`).

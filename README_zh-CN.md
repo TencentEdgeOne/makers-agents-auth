@@ -1,7 +1,5 @@
 # Agents 登录鉴权模板
 
-**语言：** [English](./README.md) | 简体中文
-
 > 基于 **OpenAI Agents SDK** 的流式聊天 Agent 模板，跑在 EdgeOne Makers 上 —— 内置端到端登录鉴权（边缘中间件 + Cloud Functions + Agent 自验签），账号体系存在 Neon Postgres。
 
 **框架：** OpenAI Agents SDK · **分类：** Quick Start · **语言：** TypeScript
@@ -363,9 +361,9 @@ makers-agent-auth/
 
 ## 资源
 
-* [EdgeOne Makers Agents 文档](https://pages.edgeone.ai/document/agents)
-* [EdgeOne Makers 快速开始](https://pages.edgeone.ai/document/agents-quickstart)
-* [Makers Models](https://pages.edgeone.ai/document/models)
+* [EdgeOne Makers Agents 文档](https://cloud.tencent.com/document/product/1552/132759)
+* [EdgeOne Makers 快速开始](https://cloud.tencent.com/document/product/1552/132786)
+* [Makers Models](https://cloud.tencent.com/document/product/1552/132748)
 
 ## License
 
