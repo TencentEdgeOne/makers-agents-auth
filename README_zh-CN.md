@@ -311,7 +311,7 @@ edgeone makers dev
 ## 项目结构
 
 ```text
-makers-agent-auth/
+makers-agents-auth/
 ├── middleware.js                    # Edge V8 中间件 — Web Crypto HS256 验签；matcher 即受保护路径唯一来源
 ├── agents/
 │   ├── chat/index.ts                # POST /chat — Agent 自验签 + LLM 流式
@@ -340,9 +340,8 @@ makers-agent-auth/
 │   │   └── SignInButton.tsx         # 访客头部 CTA — 唤起登录弹窗
 │   ├── components/                  # 聊天 UI 组件
 │   ├── i18n/                        # zh / en 文案
+│   ├── lib/chatUiStore.ts           # 浏览器端消息快照（IndexedDB 持久化 + 401 重试保护）
 │   └── api.ts                       # 浏览器 → 后端封装 + 401 拦截
-├── scripts/
-│   └── db-check.mjs                 # Neon 连接探测
 ├── edgeone.json                     # Agent runtime + cloud-functions 配置
 └── package.json
 ```

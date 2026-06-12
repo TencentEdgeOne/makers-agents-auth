@@ -311,7 +311,7 @@ Open `http://localhost:8080/agent-metrics` for the local observability panel.
 ## Project Structure
 
 ```text
-makers-agent-auth/
+makers-agents-auth/
 ├── middleware.js                    # Edge V8 — Web Crypto HS256 verify; matcher = sole protected-path source
 ├── agents/
 │   ├── chat/index.ts                # POST /chat — Agent self-verify + LLM stream
@@ -340,9 +340,8 @@ makers-agent-auth/
 │   │   └── SignInButton.tsx         # Guest header CTA — opens the login modal
 │   ├── components/                  # Chat UI components
 │   ├── i18n/                        # zh / en strings
+│   ├── lib/chatUiStore.ts           # Browser-side message snapshot (IndexedDB persistence + 401-retry safety)
 │   └── api.ts                       # Browser → backend wrappers + 401 interceptor
-├── scripts/
-│   └── db-check.mjs                 # Neon connection probe
 ├── edgeone.json                     # Agent runtime + cloud-functions config
 └── package.json
 ```
